@@ -14,4 +14,12 @@ class Date
   def compacted_str
     self.strftime("%Y%m%d")
   end
+
+  def self.parse_with_slashes(date_str)
+    begin
+      Date::strptime(date_str, "%m/%d/%Y")
+    rescue => e
+      nil
+    end
+  end
 end

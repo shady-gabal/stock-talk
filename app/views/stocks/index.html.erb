@@ -1,4 +1,25 @@
-<form method="get" class="center" id="stocks-parameters-form" style="display: inline-block !important; width: 97%; margin: 0;">
+<form method="get" class="center" id="stocks-parameters-form" style="display: inline-block !important; width: 97%; margin: 0; margin-top: 20px !important;">
+  Find stocks that are <input class="ui compact input" type="number" name="closeness" placeholder="2" value="" />% away from the 52 week
+  <select name="high_low">
+    <option value="high" selected>high</option>
+    <option value="low">low</option>
+  </select>
+  <br/>
+  with an earnings per share of $<input class="ui compact input" type="number" name="closeness" placeholder="5" value="" /> or lower <br/>
+  sort by
+
+  <select name="sort">
+    <option value="Stock Price" selected>Stock Price</option>
+    <option value="Stock Price" selected>Last Day's Change</option>
+    <option value="Stock Price" selected>5 Day Change</option>
+    <option value="Stock Price" selected>Insider Volume</option>
+  </select>
+
+  <select>
+    <option value="asc" selected>ascending</option>
+    <option value="desc" selected>descending</option>
+  </select>
+
   <button class="ui icon button" onclick="submitForm('#stocks-parameters-form')">
     <i class="search icon"></i>
   </button>
@@ -15,36 +36,50 @@
 
 <table class="ui selectable selectable-default striped celled table stocks-table center">
   <thead>
-  <th>Symbol</th>
-  <th>Stock Price</th>
-  <th>52 Week Low/High</th>
-  <th>Closeness to 52w low</th>
-  <th>Closeness to 52w high</th>
-  <th>Last Day's Change</th>
-  <th>5 Day Change</th>
-  <th>30 Day Insider Volume</th>
-  <th>Earnings per Share</th>
-  <th>Analyst Year-End Target Price</th>
+
+  <% @curr_sort_name = 'symbol' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Symbol <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'last_trade_price' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Stock Price <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'low_52_weeks' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">52 Week Low <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'high_52_weeks' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">52 Week High <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'near_52_weeks' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Near to 52 week <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'change_in_percent' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Last Day's Change <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'symbol' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">5 Day Change <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'insider_net_shares' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Insider Volume (30 days) <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'insider_num_transactions' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>"># Insider Transactions (30 days) <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'earnings_per_share' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Earnings per Share <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'one_year_target_price' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Analyst Year-End Target Price <%=sort_caret%></a></th>
+    <th>News</th>
   </thead>
   <tbody>
   <% @stocks.each do |stock| %>
-      <tr class="pointer-hover" onclick="window.location = '<%= stock_url(stock.symbol) %>';">
-        <td><b><%= stock.symbol %></b></td>
-        <td>$<%= stock.last_trade_price_only %></td>
-        <td> <%= "$#{stock.year_low}" %> / <%= "$#{stock.year_high}" %> </td>
+      <!--<tr class="pointer-hover" onclick="window.location = '<%= stock_url(stock.symbol) %>';">-->
+      <tr>
+      <td><b><%= stock.symbol %></b></td>
+        <td>$<%= stock.last_trade_price %></td>
+        <td> <%= "$#{stock.year_low}" %> </td>
+        <td> <%= "$#{stock.year_high}" %> </td>
         <td>
-          <% val = stock.last_trade_price_only - stock.year_low %>
-           +<%= number_to_percentage( val / stock.year_low * 100, precision: 0) %>  ($<%= val %>)
+          <%= stock.near_to_52_weeks %>
         </td>
-        <td>
-          <% val = stock.last_trade_price_only - stock.year_high %>
-          <%= number_to_percentage( val / stock.year_high * 100, precision: 0) %>  ($<%= val %>)
-        </td>
-        <td class="<%= stock.change < 0 ? "negative" : "positive" %>">$<%= stock.change %> (<%= stock.changein_percent %>%)</td>
+        <td class="<%= pos_neg_class stock.change %>">$<%= number_with_sign stock.change %> (<%= stock.change_in_percent %>%)</td>
         <td></td>
-        <td><%= stock.insider_transactions.sum(:net_shares) %></td>
-        <td><%= stock.earnings_share %></td>
-        <td> $<%= stock.oneyr_target_price %> </td>
+        <% shares = stock.insider_transactions.sum(:net_shares) %>
+        <td class="<%= pos_neg_class shares %>"><%= shares == 0 ? "" : (shares < 0 ? "Sold " : "Bought ") %><%= number_with_delimiter(shares.abs, delimiter: ",")%> <%= shares == 0 ? "" : "at $#{number_with_precision stock.insider_transactions.average(:transaction_price_from), precision: 2} average" %></td>
+        <td> <%= stock.insider_num_transactions %> </td>
+        <td>$<%= stock.earnings_per_share %></td>
+        <td> $<%= stock.one_year_target_price %> </td>
+        <td><%= link_to "News", news_url(stock.symbol), target: "_blank" %></td>
       </tr>
   <% end %>
   </tbody>

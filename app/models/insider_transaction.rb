@@ -1,17 +1,18 @@
 class InsiderTransaction < ActiveRecord::Base
-  belongs_to :stock
+  # belongs_to :stock
+  belongs_to :stock, foreign_key: :stock_symbol, primary_key: :symbol
 
   EDGAR_OFFSET_INTERVAL = 25
-  EDGAR_SLEEP_INTERVAL = 1.1
+  EDGAR_SLEEP_INTERVAL = 0.6
 
   module TransactionType
     Sell = "sell"
     Buy = "buy"
   end
 
-  def self.create_with_transaction(transaction, save: true)
+  def self.data_with_transaction(transaction)
     pairs = transaction["values"]
-    new_transaction = InsiderTransaction.new
+    data = {}
 
     pairs.each do |pair|
       next if pair.blank?
@@ -20,45 +21,49 @@ class InsiderTransaction < ActiveRecord::Base
 
       case field
         when "issueid"
-          new_transaction.issue_id = val
+          data[:issue_id] = val
         when "transactiondate"
-          new_transaction.transaction_date = Date::strptime(val, "%m/%d/%Y")
+          data[:transaction_date] = Date.parse_with_slashes val
         when "transactionpricefrom"
-          new_transaction.transaction_price_from = val
+          data[:transaction_price_from] = val
         when "numtransactions"
-          new_transaction.num_transactions = val
+          data[:num_transactions] = val
         when "netshares"
-          new_transaction.net_shares = val
+          data[:net_shares] = val
         when "grossshares"
-          new_transaction.gross_shares = val
+          data[:gross_shares] = val
         when "numsells"
-          new_transaction.num_sells = val
+          data[:num_sells] = val
         when "numbuys"
-          new_transaction.num_buys = val
+          data[:num_buys] = val
         when "sharessold"
-          new_transaction.shares_sold = val
+          data[:shares_sold] = val
         when "sharesbought"
-          new_transaction.shares_bought = val
+          data[:shares_bought] = val
         when "transactionpriceto"
-          new_transaction.transaction_price_to = val
+          data[:transaction_price_to] = val
         when "ownershiptype"
-          new_transaction.ownership_type = val
+          data[:ownership_type] = val
         when "insider_form_type"
-          new_transaction.insider_form_type = val
+          data[:insider_form_type] = val
       end
     end
 
-    if new_transaction.net_shares > 0
-      new_transaction.transaction_type = TransactionType::Buy
-    elsif new_transaction.net_shares < 0
-      new_transaction.transaction_type = TransactionType::Sell
+    if data[:net_shares] > 0
+      data[:transaction_type] = TransactionType::Buy
+    elsif data[:net_shares] < 0
+      data[:transaction_type] = TransactionType::Sell
     end
 
-    if save
-      new_transaction.save
-    end
+    data
 
-    return new_transaction
+    # new_transaction = InsiderTransaction.new(data)
+    #
+    # if save
+    #   new_transaction.save
+    # end
+
+    # return new_transaction
   end
 
   def self.stock_ids_for_dates_issue_ids(dates_to_issue_ids)
@@ -67,16 +72,24 @@ class InsiderTransaction < ActiveRecord::Base
     round = 0
 
     dates_to_issue_ids.keys.each do |date_str|
-      issue_ids = dates_to_issue_ids[date_str]
+      next unless date_str <= "20170622" && date_str >= "20170621"
 
-      issue_ids.in_groups_of(50) do |issue_id_group|
+      puts "Starting on #{date_str}..."
+
+      issue_ids = dates_to_issue_ids[date_str].flatten
+
+      issue_ids.in_groups_of(20) do |issue_id_group|
+        issue_id_group = issue_id_group
+
         keep_going = true
         offset = 0
+        num_rows = nil
 
         while keep_going
-          puts "InsiderTransaction: Processing offset #{offset}"
+          puts "InsiderTransaction: Processing offset #{offset} for round #{round}"
 
           ids = issue_id_group.compact.join(",")
+
           url = "http://edgaronline.api.mashery.com/v2/insiders/transactions.json?transactiondates=#{date_str}&offset=#{offset}&issueids=#{ids}&appkey=#{ENV["ST_EDGAR_API_KEY"]}"
 
           res = Faraday.get url
@@ -88,6 +101,11 @@ class InsiderTransaction < ActiveRecord::Base
           end
 
           rows = data["result"]["rows"]
+
+          if num_rows.nil?
+            puts data["result"]["totalrows"].to_i
+          end
+
           num_rows = data["result"]["totalrows"].to_i
 
           puts num_rows
@@ -104,25 +122,41 @@ class InsiderTransaction < ActiveRecord::Base
               val = pair["value"]
 
               if field == "issueid"
-                issue_id = val
+                issue_id = val.to_s
               elsif field == "issueticker"
-                ticker = val
+                ticker = val.upcase
               end
             end
 
             if !issue_id.blank? && !ticker.blank? && issue_ids_to_stock_ids[issue_id].blank?
-              stock = Stock.find_by_symbol ticker.upcase
+              issue_ids_to_stock_ids[issue_id] = ticker
 
-              if !stock.nil?
-                issue_ids_to_stock_ids[issue_id.to_s] = stock.id
-              end
+              # ticker.upcase!
+              # stock_id = nil
+              #
+              # if stock_ids[ticker]
+              #   stock_id = stock_ids[ticker]
+              # else
+              #   stock = Stock.find_by_symbol ticker
+              #
+              #   if !stock.nil?
+              #     stock_ids[ticker] = stock.id
+              #     stock_id = stock.id
+              #   end
+              # end
+              #
+              # if !stock_id.nil?
+              #   issue_ids_to_stock_ids[issue_id.to_s] = stock_id
+              # end
+
             end
           end
 
           round += 1
-          if round % 2 == 0
+
+          # if round % 2 == 0
             sleep EDGAR_SLEEP_INTERVAL
-          end
+          # end
 
           if offset + EDGAR_OFFSET_INTERVAL < num_rows
             offset += EDGAR_OFFSET_INTERVAL
@@ -135,7 +169,7 @@ class InsiderTransaction < ActiveRecord::Base
       end
     end
 
-    puts "Made #{round} API calls to edgar here"
+    puts "Made #{round} API calls to edgar in InsiderTransaction.stock_ids_for_dates_issue_ids"
     issue_ids_to_stock_ids
   end
 end

@@ -16,9 +16,8 @@ class CreateInsiderTransactions < ActiveRecord::Migration
       t.string :ownership_type
       t.string :transaction_type
       t.string :insider_form_type
-      t.string :symbol
 
-      t.belongs_to :stock
+      t.string :stock_symbol, index: true
 
       t.timestamps null: false
     end

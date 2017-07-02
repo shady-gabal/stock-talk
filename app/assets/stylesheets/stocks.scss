@@ -1,3 +1,19 @@
 // Place all the styles related to the stocks controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
+
+.table-heading a {
+  color: #666;
+}
+
+a.sort-selected {
+  color: blue;
+}
+
+a.sort-unselected {
+  color: #000;
+}
+
+.table-heading a {
+  display: inline-block;
+}
