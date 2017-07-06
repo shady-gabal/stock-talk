@@ -191,6 +191,7 @@ PLATFORMS
 
 DEPENDENCIES
   activerecord-import
+  addressable
   byebug
   coffee-rails (~> 4.1.0)
   edgar

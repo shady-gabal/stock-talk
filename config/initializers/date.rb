@@ -5,7 +5,7 @@ class Date
     num_days.times do |num|
       date = num.days.ago
 
-      date_strs << date.strftime("%Y%m%d")
+      date_strs << date.compacted_str
     end
 
     date_strs
@@ -21,5 +21,11 @@ class Date
     rescue => e
       nil
     end
+  end
+
+  def human_readable(time: true)
+    format_str = "%A %B %d, %Y"
+    format_str += " at %I:%M %P" if time
+    strftime(format_str)
   end
 end

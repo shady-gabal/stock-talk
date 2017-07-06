@@ -32,6 +32,8 @@ gem 'will_paginate_semantic_ui'
 gem 'yahoo-finance'
 gem 'sec_query'
 gem 'edgar'
+gem 'addressable'
+
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 

@@ -35,6 +35,10 @@ class Stock < ActiveRecord::Base
     stock_names
   end
 
+  def self.update_stocks
+    Stock.create_stocks
+  end
+
   def self.create_stocks
     Stock.destroy_all
 

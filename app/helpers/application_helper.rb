@@ -44,7 +44,12 @@ module ApplicationHelper
       order = "desc"
     end
 
-    "?sort=#{target_sort_name}_#{order}"
+    uri = Addressable::URI.parse(request.original_url)
+    p = uri.query_values || {}
+    p['sort'] = "#{target_sort_name}_#{order}"
+    uri.query_values = p
+
+    uri.to_s
   end
 
   def sort_active?(target_sort_name=nil)
@@ -64,7 +69,8 @@ module ApplicationHelper
   end
 
   def news_url(symbol)
-    "http://www.marketwatch.com/investing/stock/#{symbol.downcase}/news"
+    "https://www.google.com/search?q=#{symbol.downcase}+stock+news"
+    # "http://quotes.wsj.com/#{symbol.upcase}"
   end
 
 end

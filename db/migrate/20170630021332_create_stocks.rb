@@ -174,7 +174,7 @@ class CreateStocks < ActiveRecord::Migration
       t.integer :volume, :limit => 8
       t.string :weeks_range_52
 
-l
+
       t.timestamps null: false
     end
   end

@@ -1,29 +1,34 @@
-<form method="get" class="center" id="stocks-parameters-form" style="display: inline-block !important; width: 97%; margin: 0; margin-top: 20px !important;">
-  Find stocks that are <input class="ui compact input" type="number" name="closeness" placeholder="2" value="" />% away from the 52 week
-  <select name="high_low">
-    <option value="high" selected>high</option>
-    <option value="low">low</option>
-  </select>
-  <br/>
-  with an earnings per share of $<input class="ui compact input" type="number" name="closeness" placeholder="5" value="" /> or lower <br/>
-  sort by
+<div class="center" style="margin-top: 20px !important;">
+  <h5>Last Updated: <%= @last_updated_date.to_datetime.human_readable %></h5>
+  <button onclick="update()">Update Now</button>
+</div>
 
-  <select name="sort">
-    <option value="Stock Price" selected>Stock Price</option>
-    <option value="Stock Price" selected>Last Day's Change</option>
-    <option value="Stock Price" selected>5 Day Change</option>
-    <option value="Stock Price" selected>Insider Volume</option>
-  </select>
+<!--<form method="get" class="center" id="stocks-parameters-form" style="display: inline-block !important; width: 97%; margin: 0; margin-top: 20px !important;">-->
+  <!--Find stocks that are <input class="ui compact input" type="number" name="closeness" placeholder="2" value="" />% away from the 52 week-->
+  <!--<select name="high_low">-->
+    <!--<option value="high" selected>high</option>-->
+    <!--<option value="low">low</option>-->
+  <!--</select>-->
+  <!--<br/>-->
+  <!--with an earnings per share of $<input class="ui compact input" type="number" name="closeness" placeholder="5" value="" /> or lower <br/>-->
+  <!--sort by-->
 
-  <select>
-    <option value="asc" selected>ascending</option>
-    <option value="desc" selected>descending</option>
-  </select>
+  <!--<select name="sort">-->
+    <!--<option value="Stock Price" selected>Stock Price</option>-->
+    <!--<option value="Stock Price" selected>Last Day's Change</option>-->
+    <!--<option value="Stock Price" selected>5 Day Change</option>-->
+    <!--<option value="Stock Price" selected>Insider Volume</option>-->
+  <!--</select>-->
 
-  <button class="ui icon button" onclick="submitForm('#stocks-parameters-form')">
-    <i class="search icon"></i>
-  </button>
-</form>
+  <!--<select>-->
+    <!--<option value="asc" selected>ascending</option>-->
+    <!--<option value="desc" selected>descending</option>-->
+  <!--</select>-->
+
+  <!--<button class="ui icon button" onclick="submitForm('#stocks-parameters-form')">-->
+    <!--<i class="search icon"></i>-->
+  <!--</button>-->
+<!--</form>-->
 
 <div class="ui  input center" style="display: inline-block; margin: 20px auto !important; width: 100% !important; ">
   <form method="get" class="center" id="stocks-search-form" style="display: inline-block !important; width: 97%; margin: 0;">
@@ -49,8 +54,8 @@
     <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Near to 52 week <%=sort_caret%></a></th>
     <% @curr_sort_name = 'change_in_percent' %>
     <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Last Day's Change <%=sort_caret%></a></th>
-    <% @curr_sort_name = 'symbol' %>
-    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">5 Day Change <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'change_percent_realtime' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Last Day's Change Realtime <%=sort_caret%></a></th>
     <% @curr_sort_name = 'insider_net_shares' %>
     <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Insider Volume (30 days) <%=sort_caret%></a></th>
     <% @curr_sort_name = 'insider_num_transactions' %>
@@ -59,9 +64,35 @@
     <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Earnings per Share <%=sort_caret%></a></th>
     <% @curr_sort_name = 'one_year_target_price' %>
     <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Analyst Year-End Target Price <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'target_price_diff' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Near to Target Price <%=sort_caret%></a></th>
+    <% @curr_sort_name = 'average_daily_volume' %>
+    <th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Avg Daily Volume <%=sort_caret%></a></th>
+    <!--<% @curr_sort_name = 'earnings_date' %>-->
+    <!--<th class="table-heading"><a class="<%= sort_active? ? "sort-selected" : "sort-unselected" %>" href="<%=sort_url%>">Earnings Date <%=sort_caret%></a></th>-->
     <th>News</th>
   </thead>
   <tbody>
+  <tr>
+    <form method="get" action="/" id="filter-form">
+      <input type="hidden" name="sort" value="<%= @active_sort_name %>" />
+      <td></td>
+      <td><input class="filter-input" name="filter[last_trade_price]" type="text" value="<%= @filters[:last_trade_price] %>" /></td>
+      <td><input class="filter-input" name="filter[low_52_weeks]" type="text" value="<%= @filters[:low_52_weeks] %>" /></td>
+      <td><input class="filter-input" name="filter[high_52_weeks]" type="text" value="<%= @filters[:high_52_weeks] %>" /></td>
+      <td><input class="filter-input" name="filter[near_52_weeks]" type="text" value="<%= @filters[:near_52_weeks] %>" /></td>
+      <td><input class="filter-input" name="filter[change_in_percent]" type="text" value="<%= @filters[:change_in_percent] %>" /></td>
+      <td><input class="filter-input" name="filter[change_percent_realtime]" type="text" value="<%= @filters[:change_percent_realtime] %>" /></td>
+      <td><input class="filter-input" name="filter[insider_net_shares]" type="text" value="<%= @filters[:insider_net_shares] %>" /></td>
+      <td><input class="filter-input" name="filter[insider_num_transactions]" type="text" value="<%= @filters[:insider_num_transactions] %>" /></td>
+      <td><input class="filter-input" name="filter[earnings_per_share]" type="text" value="<%= @filters[:earnings_per_share] %>" /></td>
+      <td><input class="filter-input" name="filter[one_year_target_price]" type="text" value="<%= @filters[:one_year_target_price] %>" /></td>
+      <td><input class="filter-input" name="filter[target_price_diff]" type="text" value="<%= @filters[:target_price_diff] %>" /></td>
+      <td><input class="filter-input" name="filter[average_daily_volume]" type="text" value="<%= @filters[:average_daily_volume] %>" /></td>
+      <td><input type="submit" /></td>
+    </form>
+  </tr>
+
   <% @stocks.each do |stock| %>
       <!--<tr class="pointer-hover" onclick="window.location = '<%= stock_url(stock.symbol) %>';">-->
       <tr>
@@ -73,18 +104,48 @@
           <%= stock.near_to_52_weeks %>
         </td>
         <td class="<%= pos_neg_class stock.change %>">$<%= number_with_sign stock.change %> (<%= stock.change_in_percent %>%)</td>
-        <td></td>
+        <td><%= number_to_percentage stock.change_percent_realtime, precision: 0 %></td>
         <% shares = stock.insider_transactions.sum(:net_shares) %>
         <td class="<%= pos_neg_class shares %>"><%= shares == 0 ? "" : (shares < 0 ? "Sold " : "Bought ") %><%= number_with_delimiter(shares.abs, delimiter: ",")%> <%= shares == 0 ? "" : "at $#{number_with_precision stock.insider_transactions.average(:transaction_price_from), precision: 2} average" %></td>
         <td> <%= stock.insider_num_transactions %> </td>
         <td>$<%= stock.earnings_per_share %></td>
         <td> $<%= stock.one_year_target_price %> </td>
+        <td> $<%= stock.target_price_diff %> </td>
+        <td> <%= stock.average_daily_volume.nil? ? "N/A" : number_to_human(stock.average_daily_volume.to_i) %> </td>
         <td><%= link_to "News", news_url(stock.symbol), target: "_blank" %></td>
       </tr>
   <% end %>
   </tbody>
 </table>
 
-<div class="center" style="margin-top: 20px !important;">
+<div class="center" style="margin-top: 20px !important; margin-bottom: 20px !important;">
   <%= will_paginate @stocks, renderer: WillPaginateSemanticUi::ActionView::Renderer %>
 </div>
+
+<script>
+  function update(){
+    $("body").append('<div class="ui active dimmer"> <div class="ui text loader">Updating...</div></div>');
+
+    $.ajax({
+      type: "POST",
+      url: "/update",
+      timeout: 600000,
+      success: function(response){
+        location.reload();
+      },
+      error: function(response){
+        alert("Error updating.");
+      },
+      dataType: 'json'
+    });
+  }
+
+  $('#filter-form').submit(function () {
+    $(this)
+        .find('input[name]')
+        .filter(function () {
+          return this.value.isEmpty();
+        })
+        .prop('name', '');
+  });
+</script>

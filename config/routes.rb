@@ -55,5 +55,6 @@ Rails.application.routes.draw do
   #   end
 
   root :to => 'stocks#index'
+  post '/update' => 'stocks#update_stocks'
   resources :stocks, only: [:index, :show], param: :symbol
 end
